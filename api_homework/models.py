@@ -1,52 +1,65 @@
-from typing import List, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import List, Optional
+from pydantic import BaseModel, EmailStr
 
-class RoomType(Enum):
+class RoomType(str, Enum):
     LIVING_ROOM = "LIVING_ROOM"
     BEDROOM = "BEDROOM"
     KITCHEN = "KITCHEN"
     BATHROOM = "BATHROOM"
-    HALLWAY = "HALLWAY"
-    LAUNDRY = "LAUNDRY"
 
-class DeviceType(Enum):
+class DeviceType(str, Enum):
     LIGHT = "LIGHT"
     THERMOSTAT = "THERMOSTAT"
     CAMERA = "CAMERA"
+    LOCK = "LOCK"
 
-class DeviceStatus(Enum):
+class DeviceStatus(str, Enum):
     ONLINE = "ONLINE"
     OFFLINE = "OFFLINE"
+    MAINTENANCE = "MAINTENANCE"
 
+# Pydantic models for API requests/responses
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
 
-@dataclass
-class User:
+class UserResponse(BaseModel):
     id: str
     name: str
     email: str
-    houses: List['House'] = None
 
-@dataclass
-class House:
+class HouseCreate(BaseModel):
+    name: str
+    address: str
+
+class HouseResponse(BaseModel):
     id: str
     name: str
     address: str
-    owner: User
-    rooms: List['Room'] = None
+    owner_id: str
 
-@dataclass
-class Room:
+class RoomCreate(BaseModel):
+    name: str
+    type: RoomType
+
+class RoomResponse(BaseModel):
     id: str
     name: str
     type: RoomType
-    house: House
-    devices: List['Device'] = None
+    house_id: str
 
-@dataclass
-class Device:
+class DeviceCreate(BaseModel):
+    name: str
+    type: DeviceType
+
+class DeviceResponse(BaseModel):
     id: str
     name: str
     type: DeviceType
     status: DeviceStatus
-    room: Room    
+    room_id: str
+
+class DeviceStatusUpdate(BaseModel):
+    status: DeviceStatus
