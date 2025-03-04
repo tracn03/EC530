@@ -45,9 +45,9 @@ def remove_user(id: str):
 '''
 House CRUD
 '''
-@app.post("users/{user_id}/houses/", response_model = HouseResponse)
-def create_house(id: str, house_data: HouseCreate):
-    user = db.get_user(id)
+@app.post("/users/{user_id}/houses/", response_model = HouseResponse)
+def create_house(user_id: str, house_data: HouseCreate):
+    user = db.get_user(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -83,7 +83,7 @@ def delete_house(id: str):
 '''
 Room CRUD
 '''
-@app.create("/house/{house_id}/rooms", response_model = RoomResponse)
+@app.post("/houses/{house_id}/rooms", response_model = RoomResponse)
 def create_room(house_id: str, room_data: RoomCreate):
     house = db.get_house(house_id)
     if not house:
@@ -106,7 +106,7 @@ def get_room(room_id: str) -> Optional[Room]:
 
 @app.put("/rooms/{room_id}", response_model = RoomResponse)
 def update_room(room_id: str, room_data: RoomCreate):
-    room = db.update_room(id, {"name": room_data.name, "type": room_data.type})
+    room = db.update_room(room_id, {"name": room_data.name, "type": room_data.type})
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     return room.to_response()
@@ -143,7 +143,7 @@ def get_device(device_id: str) -> Optional[Device]:
         raise HTTPException(status_code=404, detail="Device not found")
     return device.to_response()
 
-@app.put("/devices/{device_id}", reponse_model = DeviceResponse)
+@app.put("/devices/{device_id}", response_model = DeviceResponse)
 def update_device(device_id: str, device_data: DeviceCreate):
     device = db.update_device(device_id, {"name": device_data.name, "type": device_data.type})
     if device is None:
