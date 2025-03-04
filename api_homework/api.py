@@ -1,125 +1,157 @@
 from fastapi import FastAPI, HTTPException 
 from typing import Optional, List
 from models import (
-    # Enums
     RoomType, DeviceType, DeviceStatus,
-    # Pydantic models
     UserCreate, UserResponse,
     HouseCreate, HouseResponse,
     RoomCreate, RoomResponse,
     DeviceCreate, DeviceResponse,
     DeviceStatusUpdate,
-    # Domain models
     User, House, Room, Device,
-    # Database
     db
 )
-
 app = FastAPI()
-"""
-Use CRUD
-"""
 
+'''
+User CRUD
+'''
 @app.post("/users/", response_model = UserResponse)
 def create_user(user_data: UserCreate):
     user = User.create(name = user_data.name, email = user_data.email)
     db.create_user(user)
     return user.to_response()
 
+@app.get("/users/{user_id}", response_model = UserResponse)
+def get_user(id: str) -> Optional[User]:
+    user = db.get_user(id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.to_response()
+
+@app.put("/users/{user_id}", response_model = UserResponse)
+def update_user(id: str, user_data: UserCreate):
+    user = db.update_user(id, user_data)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.to_response()
+
+
+@app.delete("/users/{user_id}", response_model = UserResponse)
+def remove_user(id: str):
+    if not db.delete_user(id):
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
+
+'''
+House CRUD
+'''
+@app.post("users/{user_id}/houses/", response_model = HouseResponse)
+def create_house(id: str, house_data: HouseCreate):
+    user = db.get_user(id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-def get_user(self, id: str) -> Optional[User]:
-    return None
+    house = House.create(
+        name = house_data.name,
+        address = house_data.address, 
+        owner = user)
+    
+    db.create_house(house)
+    return house.to_response()
+
+@app.get("/houses/{house_id}", response_model = HouseResponse)
+def get_house(id: str) -> Optional[House]:
+    house = db.get_house(id)
+    if not house:
+        raise HTTPException(status_code=404, detail="House not found")
+    return house.to_response()
+    
+@app.put("/houses/{house_id}", response_model = HouseResponse)
+def update_house(id: str, house_data: HouseCreate):
+    house = db.update_house(id, house_data)
+    if not house:
+        raise HTTPException(status_code=404, detail="House not found")
+    return house.to_response()
+
+@app.delete("/houses/{house_id}", response_model = HouseResponse)
+def delete_house(id: str):
+    if not db.delete_house(id):
+        raise HTTPException(status_code=404, detail="House not found")
+    return {"message": "House deleted successfully"}
 
 
-def update_user(self, user_id: str, data: dict) -> Optional[User]:
-    return User(
-        id=user_id,
-        name=data.get('name', 'Updated User'),
-        email=data.get('email', 'updated@email.com'),
-        houses=[]
-    )
+'''
+Room CRUD
+'''
+@app.create("/house/{house_id}/rooms", response_model = RoomResponse)
+def create_room(house_id: str, room_data: RoomCreate):
+    house = db.get_house(house_id)
+    if not house:
+        raise HTTPException(status_code=404, detail="House not found")
+    
+    room = Room.create(
+        name = room_data.name,
+        type = room_data.type,
+        house = house)
+    
+    db.create_room(room)
+    return room.to_response()
 
-def remove_user():
-        pass
+@app.get("/rooms/{room_id}", response_model = RoomResponse) 
+def get_room(room_id: str) -> Optional[Room]:
+    room = db.get_room(room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    return room.to_response()
 
-
-def create_house(self, name: str, address: str, owner: User) -> House:
-    return House(
-        id=str(uuid.uuid4()),
-        name=name,
-        address=address,
-        owner=owner,
-        rooms=[]
-    )
-
-def get_house(self, house_id: str) -> Optional[House]:
-    return None
-
-def update_house(self, house_id: str, data: dict) -> Optional[House]:
-    return House(
-        id=house_id,
-        name=data.get('name', 'Updated House'),
-        address=data.get('address', 'Updated Address'),
-        owner=data.get('owner'),
-        rooms=[]
-    )
-
-def delete_house(self, house_id: str) -> bool:
-    return True
+@app.put("/rooms/{room_id}", response_model = RoomResponse)
+def update_room(room_id: str, room_data: RoomCreate):
+    room = db.update_room(id, {"name": room_data.name, "type": room_data.type})
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    return room.to_response()
 
 
-def create_room(self, name: str, room_type: RoomType, house: House) -> Room:
-    return Room(
-        id=str(uuid.uuid4()),
-        name=name,
-        type=room_type,
-        house=house,
-        devices=[]
-    )
-
-def get_room(self, room_id: str) -> Optional[Room]:
-    return None
-
-def update_room(self, room_id: str, data: dict) -> Optional[Room]:
-    return Room(
-        id=room_id,
-        name=data.get('name', 'Updated Room'),
-        type=data.get('type', RoomType.BEDROOM),
-        house=data.get('house'),
-        devices=[]
-    )
-
-def delete_room(self, room_id: str) -> bool:
-    return True
+@app.delete("/rooms/{room_id}", response_model = RoomResponse)
+def delete_room(room_id: str):
+    if not db.delete_room(room_id):
+        raise HTTPException(status_code=404, detail="Room not found")
+    return {"message": "Room deleted successfully"}
 
 
-def create_device(self, name: str, device_type: DeviceType, room: Room) -> Device:
-    return Device(
-        id=str(uuid.uuid4()),
-        name=name,
-        type=device_type,
-        status=DeviceStatus.OFFLINE,
-        room=room
-    )
+'''
+Device CRUD
+'''
+@app.post("/rooms/{room_id}/devices", response_model = DeviceResponse)  
+def create_device(room_id: str, device_data: DeviceCreate):
+    room = db.get_room(room_id)
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    device = Device.create(
+        name = device_data.name,
+        type = device_data.type,
+        room = room)
+    
+    db.create_device(device)
+    return device.to_response()
 
-def get_device(self, device_id: str) -> Optional[Device]:
-    return None
+@app.get("/devices/{device_id}", response_model = DeviceResponse)
+def get_device(device_id: str) -> Optional[Device]:
+    device = db.get_device(device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device.to_response()
 
-def update_device(self, device_id: str, data: dict) -> Optional[Device]:
-    return Device(
-        id=device_id,
-        name=data.get('name', 'Updated Device'),
-        type=data.get('type', DeviceType.LIGHT),
-        status=data.get('status', DeviceStatus.ONLINE),
-        room=data.get('room')
-    )
+@app.put("/devices/{device_id}", reponse_model = DeviceResponse)
+def update_device(device_id: str, device_data: DeviceCreate):
+    device = db.update_device(device_id, {"name": device_data.name, "type": device_data.type})
+    if device is None:
+        raise HTTPException(status_code=404, detail="Device not found")
+    return device.to_response()
 
-def delete_device(self, device_id: str) -> bool:
-    return True
-
-def update_device_status(self, device_id: str, status: DeviceStatus) -> Optional[Device]:
-    device = self.get_device(device_id)
-    if device:
-        device.status = status
-        return device
-    return None
+@app.delete("/devices/{device_id}", response_model = DeviceResponse)
+def delete_device(device_id: str):
+    if not db.delete_device(device_id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return {"message": "Device deleted successfully"}
