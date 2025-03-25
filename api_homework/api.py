@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException 
 from typing import Optional, List
-from models import (
+from .models import (
     RoomType, DeviceType, DeviceStatus,
     UserCreate, UserResponse,
     HouseCreate, HouseResponse,
@@ -54,7 +54,7 @@ def create_house(user_id: str, house_data: HouseCreate):
     house = House.create(
         name = house_data.name,
         address = house_data.address, 
-        owner = user)
+        owner_id = user.id)
     
     db.create_house(house)
     return house.to_response()
