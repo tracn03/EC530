@@ -87,7 +87,7 @@ updated_device_data = {
 response = requests.put(f"{BASE_URL}/devices/{device_id}", json=updated_device_data)
 print_response(response)
 
-# 11. Delete operations (uncomment to test)
+# 11. Delete operations 
 """
 # Delete device
 print(f"Deleting device with ID: {device_id}")
